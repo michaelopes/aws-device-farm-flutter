@@ -1,0 +1,25 @@
+{
+  "name": "aws-device-farm-flutter",
+  "version": "1.0.0",
+  "description": "Automatize aws device farm from flutter appium",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "bin": {
+    "adff": "./bin/index.js"
+  },
+  "preferGlobal": true,
+  "author": "Michael Lopes",
+  "license": "MIT",
+  "dependencies": {
+    "aws-sdk": "^2.921.0",
+    "commander": "^7.2.0",
+    "delay": "^5.0.0",
+    "jszip": "^3.6.0",
+    "lodash": "^4.17.21",
+    "shelljs": "^0.8.4",
+    "unirest": "^0.6.0"
+  }
+}
