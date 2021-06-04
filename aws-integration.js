@@ -5,6 +5,7 @@ const fs = require('fs');
 const AWS = require('aws-sdk');
 const unirest = require('unirest');
 const delay = require('delay');
+const os = require('os');
 
 const devicefarm = new AWS.DeviceFarm({ region: 'us-west-2' })
 const gParams = {
@@ -12,6 +13,7 @@ const gParams = {
 }
 
 var mainFunc = function (mainParams) {
+    console.log(os.tmpdir());
     var hasError = false;
     if (!mainParams.nodeTestAbsolutPath) {
         console.error("Test folder is required.");
@@ -127,7 +129,7 @@ var mainFunc = function (mainParams) {
                             fileUpload(createdExecUpload.url, osType == "ANDROID_APP" ? mainParams.apkAbsolutePath : mainParams.ipaAbsolutePath, function () {
                                 checkUpload(createdExecUpload.arn, function () {
                                     createZipUpload(function () {
-                                        fileUpload(createdZipUpload.url, __dirname + "/bundle.zip", function () {
+                                        fileUpload(createdZipUpload.url, os.tmpdir() + "/bundle.zip", function () {
                                             checkUpload(createdZipUpload.arn, function () {
                                                 createSpecUpload(function () {
                                                     fileUpload(createdSpecUpload.url, __dirname + "/bundle-file.yml", function () {
@@ -236,7 +238,7 @@ var mainFunc = function (mainParams) {
             zip.file(tgzFileName, tgzPromise)
             // Write the zip
             zip.generateNodeStream({ type: 'nodebuffer', streamFiles: true })
-                .pipe(fs.createWriteStream("bundle.zip"))
+                .pipe(fs.createWriteStream(os.tmpdir() + "/bundle.zip"))
                 .on('finish', () => {
                     console.log('--- Write zip ok --- ')
                     resolve('finish')
