@@ -44,18 +44,8 @@ var mainFunc = function (mainParams) {
 
     checkAwsCli(function () {
         checkAwsProject(function () {
-            shell.exec("npm list -g npm-bundle", function (code, stdout, stderr) {
-                if (stdout.indexOf("npm-bundle@") >= 0) {
-                    execNpmBundle();
-                } else {
-                    shell.exec("npm install --global npm-bundle", function (code, stdout, stderr) {
-                        if (stderr) console.error('--- Install npm-bundle failed --- ', stderr)
-                        else {
-                            execNpmBundle();
-                        }
-                    });
-                }
-            });
+            //cow(.*)milk
+            execNpmBundle();
         });
     });
 
@@ -117,13 +107,18 @@ var mainFunc = function (mainParams) {
         }
     }
 
+    function getTgzName() {
+        var package = mainParams.nodeTestAbsolutPath + "/package.json";
+        var file = JSON.parse(fs.readFileSync(package));
+        return file.name + "-" + file.version + ".tgz";
+    }
+    
     //CONTAINER
     function execNpmBundle() {
-        shell.exec("cd " + mainParams.nodeTestAbsolutPath + " && npm-bundle", function (code, stdout, stderr) {
-            if (stderr) console.error("-- Error --", stderr)
+        shell.exec("cd " + mainParams.nodeTestAbsolutPath + " && npm install && npm pack", function (code, stdout, stderr) {
+            if (stderr && code > 0) console.error("-- Error --", stderr)
             else {
-                console.log("out", stdout);
-                zipTgzPackage(stdout.replace("\n", "")).then(function () {
+                zipTgzPackage(getTgzName()).then(function () {
                     selectDevicePool(function () {
                         createExecUpload(function () {
                             fileUpload(createdExecUpload.url, osType == "ANDROID_APP" ? mainParams.apkAbsolutePath : mainParams.ipaAbsolutePath, function () {
@@ -220,30 +215,49 @@ var mainFunc = function (mainParams) {
     function zipTgzPackage(tgzFileName) {
         let fullPath = mainParams.nodeTestAbsolutPath + "/" + tgzFileName;
         return new Promise(((resolve, reject) => {
-            // Zipping the TGZ
-            const zip = new JSZip()
-            const tgzPromise = new JSZip.external.Promise((resolve, reject) => {
-                fs.readFile(fullPath, function (err, data) {
 
-                    if (err) {
-                        console.log('--- Read file err --- ', err)
-                        reject(err)
+            var execZip = function (counter) {
+                counter = counter == undefined ? 0 : counter;
+
+                if (!fs.existsSync(fullPath)) {
+                    if (counter <= 5) {
+                        setTimeout(function () {
+                            counter = counter + 1;
+                            execZip(counter)
+                            console.log("RETRY ZIP", counter, fullPath);
+                        }, 2000);
                     } else {
-                        console.log('--- Read file ok --- ', data)
-                        resolve(data)
-
+                        console.error("File ", fullPath, " not created");
+                        reject("File ", fullPath, " not created")
                     }
+                    return;
+                }
+
+                const zip = new JSZip()
+                const tgzPromise = new JSZip.external.Promise((resolve, reject) => {
+                    fs.readFile(fullPath, function (err, data) {
+
+                        if (err) {
+                            console.log('--- Read file err --- ', err)
+                            reject(err)
+                        } else {
+                            console.log('--- Read file ok --- ', data)
+                            resolve(data)
+
+                        }
+                    })
                 })
-            })
-            zip.file(tgzFileName, tgzPromise)
-            // Write the zip
-            zip.generateNodeStream({ type: 'nodebuffer', streamFiles: true })
-                .pipe(fs.createWriteStream(os.tmpdir() + "/bundle.zip"))
-                .on('finish', () => {
-                    console.log('--- Write zip ok --- ')
-                    resolve('finish')
-                    fs.unlinkSync(fullPath);
-                })
+                zip.file(tgzFileName, tgzPromise)
+                // Write the zip
+                zip.generateNodeStream({ type: 'nodebuffer', streamFiles: true })
+                    .pipe(fs.createWriteStream(os.tmpdir() + "/bundle.zip"))
+                    .on('finish', () => {
+                        console.log('--- Write zip ok --- ')
+                        resolve('finish')
+                        fs.unlinkSync(fullPath);
+                    })
+            }
+            execZip();
         }))
     }
 

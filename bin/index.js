@@ -16,10 +16,10 @@ program
 
 const options = program.opts();
 const params = {
-    nodeTestAbsolutPath: options.appium_node_absolute_path || undefined,
-    projectName: options.project_name || undefined,
-    devicePoolName: options.device_pool_name || undefined,
-    apkAbsolutePath: options.apk_absolute_path || undefined,
-    ipaAbsolutePath: options.ipa_absolute_path || undefined
+    nodeTestAbsolutPath: options.appium_node_absolute_path ? options.appium_node_absolute_path.replace(/'/g, '').replace(/"/g, '') : undefined,
+    projectName: options.project_name ? options.project_name.replace(/'/g, '').replace(/"/g, '') : undefined,
+    devicePoolName: options.device_pool_name ? options.device_pool_name.replace(/'/g, '').replace(/"/g, '') : undefined,
+    apkAbsolutePath: options.apk_absolute_path ? options.apk_absolute_path.replace(/'/g, '').replace(/"/g, '') : undefined,
+    ipaAbsolutePath: options.ipa_absolute_path ? options.ipa_absolute_path.replace(/'/g, '').replace(/"/g, '') : undefined
 }
 awsIntegration.mainFunc(params);
