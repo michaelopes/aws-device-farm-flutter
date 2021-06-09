@@ -44,7 +44,7 @@ var mainFunc = function (mainParams) {
 
     checkAwsCli(function () {
         checkAwsProject(function () {
-            shell.exec("npm list -g | grep npm-bundle", function (code, stdout, stderr) {
+            shell.exec("npm list -g npm-bundle", function (code, stdout, stderr) {
                 if (stdout.indexOf("npm-bundle@") >= 0) {
                     execNpmBundle();
                 } else {
